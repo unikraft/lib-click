@@ -10,7 +10,7 @@ each C code file in this repository should declare who is the copyright owner
 and under which terms and conditions the code is licensed. If such a licence
 note is missing, the following copyright notice will apply:
 
-	Copyright (c) 2019, NEC Laboratories Europei GmbH, NEC Corporation.
+	Copyright (c) 2019, NEC Laboratories Europe GmbH, NEC Corporation.
 	                    All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without

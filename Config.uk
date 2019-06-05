@@ -84,4 +84,11 @@ config LIBCLICK_ELEMS_THREADS
 	help
 	  Build with multi-threading elements
 
+config LIBCLICK_ELEMS_USERLEVEL
+	bool "Enable userlevel elements [BROKEN]"
+	default n
+	help
+	  Build with Click userlevel elements.
+	  Be aware this currently doesn't compile.
+
 endif

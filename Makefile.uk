@@ -61,7 +61,7 @@ LIBCLICK_EXTRACTED=$(LIBCLICK_ORIGIN)/click-$(LIBCLICK_COMMIT_HASH)
 LIBCLICK_ELEMENTS_DIR=$(LIBCLICK_EXTRACTED)/elements
 LIBCLICK_BUILDTOOL=$(LIBCLICK_EXTRACTED)/bin/click-buildtool
 LIBCLICK_ELEM_DIRS=aqm ethernet etherswitch icmp ip unikraft \
-		   local simple standard tcpudp threads
+		   local simple standard tcpudp threads userlevel
 
 ################################################################################
 # Config Menu - Filter which element categories actually get built
@@ -93,7 +93,7 @@ $(LIBCLICK_BUILD)/elements.cc: $(LIBCLICK_BUILD)/.elementsmk
 	       $(LIBCLICK_BUILDTOOL) elem2export < $(LIBCLICK_BUILD)/.elementsconf > $(LIBCLICK_BUILD)/elements.cc)
 
 $(LIBCLICK_BUILD)/.cpfromtodevs: $(LIBCLICK_BUILD)/.origin
-	$(call verbose_cmd,CP,libclick: $(notdir $@),\
+	$(call verbose_cmd,ELEMCP,libclick: $(notdir $@),\
 	$(MKDIR) -p $(LIBCLICK_ORIGIN)/click-$(LIBCLICK_COMMIT_HASH)/elements && \
 	$(CP) -r $(LIBCLICK_BASE)/unikraft $(LIBCLICK_ORIGIN)/click-$(LIBCLICK_COMMIT_HASH)/elements/ && \
 	touch $@)
