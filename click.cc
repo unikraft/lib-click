@@ -121,14 +121,44 @@ read_config(u_int rid = 0)
 #define MAX_ROUTERS	64
 static ErrorHandler *errh;
 static Master master(1);
+static String macaddr_preamble;
+
+static void
+make_macaddr_preamble()
+{
+	unsigned int ndev = uk_netdev_count();
+	const size_t buflen = 64;
+	char buf[buflen];
+	const struct uk_hwaddr *mac;
+	StringAccum acc;
+
+	UK_ASSERT(macaddr_preamble.empty());
+
+	uk_pr_info("Found %d network device(s)\n", uk_netdev_count());
+	for (unsigned int i = 0; i < ndev; ++i) {
+		mac = uk_netdev_hwaddr_get(uk_netdev_get(i));
+		snprintf(buf, buflen,
+			"define($MAC%d %02x:%02x:%02x:%02x:%02x:%02x);\n",
+			i, mac->addr_bytes[0], mac->addr_bytes[1],
+			mac->addr_bytes[2], mac->addr_bytes[3],
+			mac->addr_bytes[4], mac->addr_bytes[5]);
+		uk_pr_info("appending %s", buf);
+		acc.append(buf);
+	}
+	acc.append("/* End unikraft-provided MAC preamble */\n");
+	macaddr_preamble = acc.take_string();
+	uk_pr_info("MAC address macros:\n%s\n", macaddr_preamble.c_str());
+}
 
 static String *
 get_config()
 {
-	String *cfg;
+	String *cfg = new String(macaddr_preamble);
 	struct ukplat_memregion_desc img;
 	char *cstr;
 	size_t cstr_len;
+
+	UK_ASSERT(!macaddr_preamble.empty());
 
 	/* First, try initrd */
 	if (ukplat_memregion_find_initrd0(&img) >= 0) {
@@ -142,7 +172,7 @@ get_config()
 		cstr = CONFIGSTRING;
 		cstr_len = strlen(CONFIGSTRING);
 	}
-	cfg = new String(cstr, cstr_len);
+	cfg->append(cstr, cstr_len);
 	printf("Received config (length %d):\n", cfg->length());
 	printf("%s\n", cfg->c_str());
 	return cfg;
@@ -198,6 +228,26 @@ router_stop(int n = MAX_ROUTERS)
 		} while (!(router_list[i].f_stop));
 	}
 	LOG("Stopped all routers...\n\n");
+}
+
+/* Initialize all netdev devices to the point where you can get a MAC
+ * address from them.
+ */
+static int
+uk_netdev_early_init(ErrorHandler *errh)
+{
+	struct uk_netdev *netdev;
+	struct uk_netdev_conf netdev_conf;
+
+	netdev_conf.nb_rx_queues = 1;
+	netdev_conf.nb_tx_queues = 1;
+	for (unsigned int i = 0; i < uk_netdev_count(); ++i) {
+		netdev = uk_netdev_get(i);
+		uk_pr_info("netdev %d early init\n", i);
+		if (uk_netdev_configure(netdev, &netdev_conf) < 0)
+			return errh->error("Failed to configure device %d\n", i);
+	}
+	return 0;
 }
 
 #if CLICK_CONSOLE_SUPPORT_IMPLEMENTED
@@ -349,6 +399,10 @@ int CLICK_MAIN(int argc, char **argv)
 	for (int i = 0; i < MAX_ROUTERS; ++i) {
 		router_list[i].f_stop = 1;
 	}
+
+	if (uk_netdev_early_init(errh))
+		return -EINVAL;
+	make_macaddr_preamble();
 
 #if CLICK_CONSOLE_SUPPORT_IMPLEMENTED
 /* TODO: This interaction between xenbus and click should be replaced with a

@@ -1,5 +1,4 @@
 static char CONFIGSTRING[] = "    define($IP 10.0.10.123);\n\
-    define($MAC0 11:22:33:44:55:66);\n\
 \n\
     source :: FromDevice;\n\
     sink   :: ToDevice;\n\
