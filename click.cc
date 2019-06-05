@@ -52,11 +52,14 @@ extern "C"{
 #include <click/straccum.hh>
 #include <click/driver.hh>
 
+#include <static_config.h>
+
 #include <uk/sched.h>
 #include <uk/thread.h>
+#include <uk/netdev.h>
+#include <uk/plat/memory.h>
 
 int click_nthreads = 1;
-
 void *__dso_handle = NULL;
 
 #define NLOG(fmt, ...)
@@ -119,6 +122,32 @@ read_config(u_int rid = 0)
 static ErrorHandler *errh;
 static Master master(1);
 
+static String *
+get_config()
+{
+	String *cfg;
+	struct ukplat_memregion_desc img;
+	char *cstr;
+	size_t cstr_len;
+
+	/* First, try initrd */
+	if (ukplat_memregion_find_initrd0(&img) >= 0) {
+		cstr = (char *)img.base;
+		cstr_len = img.len;
+	} else {
+		/* If we can't find a config: use a fallback one statically
+		 * compiled in.
+		 */
+		uk_pr_warn("Could not find a config, using standard config!\n");
+		cstr = CONFIGSTRING;
+		cstr_len = strlen(CONFIGSTRING);
+	}
+	cfg = new String(cstr, cstr_len);
+	printf("Received config (length %d):\n", cfg->length());
+	printf("%s\n", cfg->c_str());
+	return cfg;
+}
+
 struct router_instance {
 	Router *r;
 	u_int f_stop;
@@ -127,9 +156,8 @@ struct router_instance {
 void
 router_thread(void *thread_data)
 {
-	u_int *rid = (u_int*) thread_data;
-	String *config = new String; //read_config(*rid);
-	struct router_instance *ri = &router_list[*rid];
+	struct router_instance *ri = &router_list[(unsigned long)thread_data];
+	String *config = get_config();
 
 	ri->r = click_read_router(*config, true, errh, false, &master);
 	if (ri->r->initialize(errh) < 0) {
@@ -150,7 +178,6 @@ router_thread(void *thread_data)
 
 	LOG("Master/driver stopped, closing router_thread");
 	free(config);
-	free(rid);
 }
 
 void
