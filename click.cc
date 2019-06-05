@@ -32,6 +32,16 @@
  * THIS HEADER MAY NOT BE EXTRACTED OR MODIFIED IN ANY WAY.
  */
 
+/* To be implemented at a later point */
+#define CLICK_CONSOLE_SUPPORT_IMPLEMENTED 0
+
+extern "C"{
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <poll.h>
+}
+
 #include <click/config.h>
 #include <click/lexer.hh>
 #include <click/router.hh>
@@ -42,15 +52,10 @@
 #include <click/straccum.hh>
 #include <click/driver.hh>
 
-extern "C"{
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <uk/sched.h>
+#include <uk/thread.h>
 
-#include <mini-os/xenbus.h>
-#include <mini-os/shutdown.h>
-#include <mini-os/sched.h>
-}
+int click_nthreads = 1;
 
 void *__dso_handle = NULL;
 
@@ -59,19 +64,6 @@ void *__dso_handle = NULL;
 	printf("[%s:%d] " fmt "\n", \
 		__FUNCTION__, __LINE__, ##__VA_ARGS__)
 
-/**
- * xenstore helpers
- */
-#define PATH_ROOT	"clickos"
-#define PATH_MAX_LEN	1024
-
-struct xenstore_dev {
-	domid_t dom;
-	char *nodename;
-	xenbus_event_queue events;
-} *xsdev = NULL;
-
-uint32_t domid = -1;
 u_int _shutdown = 0;
 u_int _reason = 0;
 
@@ -99,6 +91,7 @@ read_rid(char *path)
 	return id;
 }
 
+#if CLICK_CONSOLE_SUPPORT_IMPLEMENTED
 String *
 read_config(u_int rid = 0)
 {
@@ -117,7 +110,7 @@ read_config(u_int rid = 0)
 
 	return cfg;
 }
-
+#endif /* CLICK_CONSOLE_SUPPORT_IMPLEMENTED */
 /*
  * click glue
  */
@@ -135,7 +128,7 @@ void
 router_thread(void *thread_data)
 {
 	u_int *rid = (u_int*) thread_data;
-	String *config = read_config(*rid);
+	String *config = new String; //read_config(*rid);
 	struct router_instance *ri = &router_list[*rid];
 
 	ri->r = click_read_router(*config, true, errh, false, &master);
@@ -174,12 +167,13 @@ router_stop(int n = MAX_ROUTERS)
 
 		do {
 			r->please_stop_driver();
-			schedule();
+			uk_sched_yield();
 		} while (!(router_list[i].f_stop));
 	}
 	LOG("Stopped all routers...\n\n");
 }
 
+#if CLICK_CONSOLE_SUPPORT_IMPLEMENTED
 void
 router_suspend(int n = MAX_ROUTERS)
 {
@@ -307,25 +301,32 @@ on_router(char *key, void *data)
 
 	return 0;
 }
+#endif /* CLICK_CONSOLE_SUPPORT_IMPLEMENTED */
+
+#if CONFIG_LIBCLICK_MAIN
+#define CLICK_MAIN main
+#else
+#define CLICK_MAIN click_main
+extern "C" int click_main(int argc, char **argv);
+#endif
 
 /* runs the event loop */
-int main(int argc, char **argv)
+int CLICK_MAIN(int argc, char **argv)
 {
-	size_t len = sizeof(struct xenstore_dev);
+	struct uk_thread *router;
 
 	click_static_initialize();
 	errh = ErrorHandler::default_handler();
 
-	xsdev = (struct xenstore_dev*) malloc(len);
-	memset(xsdev, 0, len);
 	memset(router_list, 0, MAX_ROUTERS * sizeof(struct router_instance));
 	for (int i = 0; i < MAX_ROUTERS; ++i) {
 		router_list[i].f_stop = 1;
 	}
 
-	xenbus_watch_path_token(XBT_NIL, PATH_ROOT, "router-watch",
-			&xsdev->events);
-
+#if CLICK_CONSOLE_SUPPORT_IMPLEMENTED
+/* TODO: This interaction between xenbus and click should be replaced with a
+ * generic unikraft interaction scheme, for example, via a console.
+ */
 	while (!_shutdown) {
 		String value;
 		char *err, *val, **path;
@@ -340,17 +341,18 @@ int main(int argc, char **argv)
 
 		on_router((*path + strlen(PATH_ROOT)), val);
 	}
-
+#else
+	router = uk_thread_create("click-router", router_thread, 0);
+	uk_thread_wait(router);
+#endif
 	LOG("Shutting down...");
-	xenbus_unwatch_path_token(XBT_NIL, PATH_ROOT, "router-watch");
-
-	fini_xenbus();
-	free(xsdev);
 
 	return _reason;
 }
 
 /* app shutdown hook from minios */
+/* TODO: could be reused as call-in from unikraft */
+#if CLICK_CONSOLE_SUPPORT_IMPLEMENTED
 extern "C" {
 int app_shutdown(unsigned reason)
 {
@@ -360,14 +362,12 @@ int app_shutdown(unsigned reason)
 		_shutdown = 1;
 		_reason = reason;
 		router_stop();
-		xenbus_release_wait_for_watch(&xsdev->events);
 		break;
 	case SHUTDOWN_reboot:
 		LOG("Requested shutdown reason=reboot");
 		_shutdown = 1;
 		_reason = reason;
 		router_stop();
-		xenbus_release_wait_for_watch(&xsdev->events);
 		break;
 	case SHUTDOWN_suspend:
 		LOG("Requested shutdown reason=suspend");
@@ -382,3 +382,4 @@ int app_shutdown(unsigned reason)
 	return 0;
 }
 }
+#endif /* CLICK_CONSOLE_SUPPORT_IMPLEMENTED */
