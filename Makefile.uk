@@ -134,6 +134,7 @@ LIBCLICK_CXXFLAGS-y += $(LIBCLICK_SUPPRESS_FLAGS)
 # Unikraft <-> Click glue code
 ################################################################################
 LIBCLICK_SRCS-y += $(LIBCLICK_BASE)/click.cc
+LIBCLICK_SRCS-y += $(LIBCLICK_BASE)/stubs.cc
 
 ################################################################################
 # Click sources
