@@ -5,8 +5,8 @@ config APP_DEPENDENCIES
 
 menuconfig LIBCLICK
 	bool "The Click modular router"
-	select UKUNISTD
-	select LIBNEWLIB
+	select LIBPOSIX_USER
+	select LIBNEWLIBC
 	select LIBLWIP
 	default y
 
