@@ -296,8 +296,12 @@ typedef unsigned long uintptr_t;
 
 /* Define likely and unlikely macros. */
 #if __GNUC__ >= 3
+#ifndef likely
 # define likely(x)	__builtin_expect(!!(x), 1)
+#endif
+#ifndef unlikely
 # define unlikely(x)	__builtin_expect(!!(x), 0)
+#endif
 #else
 # define likely(x)	(x)
 # define unlikely(x)	(x)

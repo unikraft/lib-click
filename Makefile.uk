@@ -109,13 +109,13 @@ UK_PREPARE += $(LIBCLICK_BUILD)/.prepared
 ################################################################################
 # App includes, compile flags
 ################################################################################
-LIBCLICK_CINCLUDES   += -I$(LIBCLICK_BASE)/include        \
-		        -I$(LIBCLICK_EXTRACTED)	     \
-			-I$(LIBCLICK_EXTRACTED)/include \
+LIBCLICK_CINCLUDES   += -I$(LIBCLICK_BASE)/include         \
+		        -I$(LIBCLICK_EXTRACTED)	           \
+			-I$(LIBCLICK_EXTRACTED)/include    \
 			-I$(LIBLWIP_LWIP_SRCS)/include/posix
-LIBCLICK_CXXINCLUDES += -I$(LIBCLICK_BASE)/include        \
-		        -I$(LIBCLICK_EXTRACTED)           \
-			-I$(LIBCLICK_EXTRACTED)/include \
+LIBCLICK_CXXINCLUDES += -I$(LIBCLICK_BASE)/include         \
+		        -I$(LIBCLICK_EXTRACTED)            \
+			-I$(LIBCLICK_EXTRACTED)/include    \
 			-I$(LIBLWIP_LWIP_SRCS)/include/posix
 
 ################################################################################
@@ -126,9 +126,9 @@ LIBCLICK_CXXFLAGS-y     += -DLWIP_TIMEVAL_PRIVATE=0 -DCLICK_USERLEVEL -DHAVE_IP6
 LIBCLICK_CXXFLAGS       += -fno-exceptions -fno-rtti -std=c++11
 
 # Suppress some warnings to make the build process look neater
-LIBCLICK_SUPPRESS_FLAGS := -Wno-strict-aliasing
+LIBCLICK_SUPPRESS_FLAGS := -Wno-strict-aliasing -Wno-parentheses -Wno-pointer-arith -Wno-unused-parameter -Wno-cast-function-type
 LIBCLICK_CFLAGS-y += $(LIBCLICK_SUPPRESS_FLAGS)
-LIBCLICK_CXXFLAGS-y += $(LIBCLICK_SUPPRESS_FLAGS)
+LIBCLICK_CXXFLAGS-y += $(LIBCLICK_SUPPRESS_FLAGS) -Wno-aligned-new -Wno-class-memaccess
 
 ################################################################################
 # Unikraft <-> Click glue code
