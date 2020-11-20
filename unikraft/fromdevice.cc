@@ -106,7 +106,7 @@ FromDevice::netdev_alloc_rxpkts(void *argp, struct uk_netbuf *pkts[],
 	FromDevice *fd = static_cast<FromDevice *>(argp);
 	for (i = 0; i < count; ++i) {
 		pkts[i] = uk_netbuf_alloc_buf(uk_alloc_get_default(),
-				BUFSIZE, fd->_dev_info.nb_encap_rx, 0, NULL);
+				BUFSIZE, fd->_dev_info.ioalign, fd->_dev_info.nb_encap_rx, 0, NULL);
 		if (!pkts[i])
 			return i;
 		pkts[i]->len = BUFSIZE;

@@ -106,7 +106,7 @@ ToDevice::push(int port, Packet *p)
 
 	uk_pr_debug("push() packet %p (len %u) -> %d\n", p, p->length(), port);
 	buf = uk_netbuf_alloc_buf(uk_alloc_get_default(),
-			p->length()+_dev_info.nb_encap_rx,
+			p->length()+_dev_info.nb_encap_rx, _dev_info.ioalign,
 			_dev_info.nb_encap_rx, 0, NULL);
 	if (!buf) {
 		uk_pr_crit("Failed to allocate netbuf for sending");
