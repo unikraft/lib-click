@@ -27,8 +27,6 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #  POSSIBILITY OF SUCH DAMAGE.
 #
-#  THIS HEADER MAY NOT BE EXTRACTED OR MODIFIED IN ANY WAY.
-#
 
 ################################################################################
 # Check requirements: Click requires netdev access, so LWIP must not attach them
