@@ -80,7 +80,7 @@ $(LIBCLICK_BUILD)/.configured: $(LIBCLICK_BUILD)/.cpfromtodevs
 	       $(TOUCH) $@)
 
 # Generate element build rules using click-buildtool
-$(LIBCLICK_BUILD)/.elementsmk: $(LIBCLICK_BUILD)/.configured $(UK_CONFIG_OUT)
+$(LIBCLICK_BUILD)/.elementsmk: $(LIBCLICK_BUILD)/.configured
 	$(call verbose_cmd,ELEMMK,libclick: $(notdir $@),\
 	       cd $(LIBCLICK_ELEMENTS_DIR) && echo "$(LIBCLICK_FILTERED_ELEM_DIRS)" | $(LIBCLICK_BUILDTOOL) findelem -r unikraft -X $(LIBCLICK_BUILD)/elements.exclude | grep -E "^[^#]" | awk '{print "LIBCLICK_SRCS-y += $$(LIBCLICK_EXTRACTED)/elements/" $$1}' > $@)
 
