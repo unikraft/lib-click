@@ -236,11 +236,28 @@ uk_netdev_early_init(ErrorHandler *errh)
 {
 	struct uk_netdev *netdev;
 	struct uk_netdev_conf netdev_conf;
+	int ret;
 
 	netdev_conf.nb_rx_queues = 1;
 	netdev_conf.nb_tx_queues = 1;
 	for (unsigned int i = 0; i < uk_netdev_count(); ++i) {
 		netdev = uk_netdev_get(i);
+
+		if (!netdev)
+			continue;
+		if (uk_netdev_state_get(netdev) != UK_NETDEV_UNCONFIGURED &&
+				uk_netdev_state_get(netdev) != UK_NETDEV_UNPROBED) {
+			uk_pr_info("Skipping to add network device %u to lwIP: Not in unconfigured state\n", i);
+			continue;
+		}
+
+		if (uk_netdev_state_get(netdev) == UK_NETDEV_UNPROBED) {
+			ret = uk_netdev_probe(netdev);
+			if (ret < 0) {
+				uk_pr_err("Failed to probe network device %u %d", i, ret);
+				continue;
+			}
+		}
 		uk_pr_info("netdev %d early init\n", i);
 		if (uk_netdev_configure(netdev, &netdev_conf) < 0)
 			return errh->error("Failed to configure device %d\n", i);
