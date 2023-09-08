@@ -152,7 +152,7 @@ static String *
 get_config()
 {
 	String *cfg = new String(macaddr_preamble);
-	struct ukplat_memregion_desc img;
+	struct ukplat_memregion_desc *img;
 	char *cstr;
 	size_t cstr_len;
 
@@ -160,8 +160,8 @@ get_config()
 
 	/* First, try initrd */
 	if (ukplat_memregion_find_initrd0(&img) >= 0) {
-		cstr = (char *)img.base;
-		cstr_len = img.len;
+		cstr = (char *)img->pbase;
+		cstr_len = img->len;
 	} else {
 		/* If we can't find a config: use a fallback one statically
 		 * compiled in.
