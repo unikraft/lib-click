@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <uk/essentials.h>
 #include <click/config.h>
 #include <click/error.hh>
 #include <click/string.hh>
