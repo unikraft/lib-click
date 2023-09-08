@@ -421,8 +421,9 @@ int CLICK_MAIN(int argc, char **argv)
 		on_router((*path + strlen(PATH_ROOT)), val);
 	}
 #else
-	router = uk_thread_create("click-router", router_thread, 0);
-	uk_thread_wait(router);
+	router = uk_sched_thread_create(uk_sched_current(), router_thread, 0, "click-router");
+	while (!uk_thread_is_exited(router))
+		uk_sched_yield();
 #endif
 	LOG("Shutting down...");
 
