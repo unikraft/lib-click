@@ -123,7 +123,7 @@ FromDevice::initialize(ErrorHandler *errh)
 	uk_pr_info("FromDevice::initialize %p device %p state %d\n",
 			this, _dev, _dev->_data->state);
 	uk_netdev_info_get(_dev, &dinf);
-	rx_conf.s = uk_sched_get_default();
+	rx_conf.s = uk_sched_current();
 	rx_conf.a = uk_alloc_get_default();
 	rx_conf.callback = click_fromdevice_rx_callback;
 	rx_conf.callback_cookie = (void *)(this);
